@@ -64,13 +64,6 @@ const findFiles = exports.findFiles = basePath => {
   }
 }
 
-// read all files in a given path into an array of file objects
-//
-// filesFromPaths(['./environments/html/index.html'])
-// => Promise.resolve([{path: './environments/html/index.html', content: '<!DOCTYPE html>\n<html>...'}])
-const filesFromPaths = exports.filesFromPaths = (paths, options) =>
-  Promise.all(paths.map(path => readFile(path, options).then(content => { return { path, content } })))
-
 // takes the same arguments as fs.writeFile() except it does not take a callback
 // returns a promise
 const writeFile = exports.writeFile = (path, content) =>
@@ -101,3 +94,13 @@ const mkdirRec = exports.mkdirRec = (path, mode) => {
 const symlink = exports.symlink = (target, path, type = 'file') =>
   new Promise((resolve, reject) =>
     fs.symlink(target, path, type, err => err ? reject(err) : resolve()))
+
+// read all files in a given path into an array of file objects
+// Note that the default encoding has been changed to utf8 by default to
+// increase utility in the ucode CES project
+//
+// filesFromPaths(['./environments/html/index.html'])
+// => Promise.resolve([{path: './environments/html/index.html', content: '<!DOCTYPE html>\n<html>...'}])
+const filesFromPaths = exports.filesFromPaths = (paths, options = {encoding: 'utf8'}) =>
+  Promise.all(paths.map(path => readFile(path, options).then(content => { return { path, content } })))
+
