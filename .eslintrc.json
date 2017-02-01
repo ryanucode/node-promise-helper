@@ -1,0 +1,18 @@
+{
+    "extends": "standard",
+    "installedESLint": true,
+    "plugins": [
+        "standard",
+        "promise"
+    ],
+    "rules": {
+      "spaced-comment": ["off", "always"],
+      "comma-dangle": ["error", {
+        "arrays": "always-multiline",
+        "functions": "ignore",
+        "objects": "always-multiline",
+        "imports": "ignore",
+        "exports": "always-multiline"
+      }]
+    }
+}
