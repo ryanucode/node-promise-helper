@@ -156,12 +156,13 @@ test('findFiles',  t => {
   .then(() => P.findFiles(dir))
   .then(foundFiles => {
     //console.log('found files:', foundFiles)
-    t.true(foundFiles.includes('./file1'), 'should find a top level file')
-    t.true(foundFiles.includes('./)(*&!@#.html'), 'should return existing files with non normal names')
-    t.true(foundFiles.includes('./nested/nested.md'), 'should find all nested files')
-    t.false(foundFiles.includes('./nested'), 'should not return directories')
-    t.false(foundFiles.includes('./sym'), 'should not return symlinks')
+    t.true(foundFiles.includes(dir + '/file1'), 'should find a top level file')
+    t.true(foundFiles.includes(dir + '/)(*&!@#.html'), 'should return existing files with non normal names')
+    t.true(foundFiles.includes(dir + '/nested/nested.md'), 'should find all nested files')
+    t.false(foundFiles.includes(dir + '/nested'), 'should not return directories')
+    t.false(foundFiles.includes(dir + '/sym'), 'should not return symlinks')
     t.false(foundFiles.includes(''), 'should not return any empty paths')
+    t.false(foundFiles.includes(dir), 'should not return the base directory')
   })
 })
 
@@ -171,9 +172,9 @@ test('filesFromPaths', t => {
   // usually i dont like to depend on other library methods in tests, however
   // findFiles() and filesFromPaths() will very often be used together
   .then(() => P.findFiles(dir))
-  .then(paths => P.filesFromPaths(paths.map(relPath => fsPath.normalize(`${dir}/${relPath}`)), {encoding: 'utf8'}))
+  .then(P.filesFromPaths)
   .then(files => {
-    //console.log('files:', files)
+    console.log('files:', files)
     const paths = files.map(f => f.path)
     //const contents = files.map(f => f.content)
     const byPath = path => files.find(f => f.path === path)

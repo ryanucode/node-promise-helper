@@ -51,11 +51,12 @@ const readFile = exports.readFile = (path, options = {encoding: null, flag: 'r'}
 const findFiles = exports.findFiles = basePath => {
   let stdout = ''
   try {
-    const findExe = spawn('find', ['-type', 'f'], {cwd: basePath, encoding: 'utf8'})
+    const findExe = spawn('find', [basePath, '-type', 'f'], {encoding: 'utf8'})
     findExe.stdout.setEncoding('utf8')
     findExe.stdout.on('data', data => { stdout += data })
     return new Promise((resolve, reject) =>
-      findExe.stdout.on('close', () => resolve(stdout.split('\n').filter(Boolean))))
+      findExe.stdout.on('close', () => 
+        resolve(stdout.split('\n').filter(Boolean).map(fsPath.normalize))))
   } catch (err) {
     // Error is usually thrown if the directory you are looking in doesnt
     // exist. Return an empty set of files if there is an error.
