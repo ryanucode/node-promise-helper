@@ -1,8 +1,31 @@
 {
+  "name": "node-promise-helper",
+  "version": "1.0.0",
+  "description": "Promise helpers and std library wrappers.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "ava": "^0.17.0"
+  },
+  "devDependencies": {},
   "scripts": {
     "test": "ava"
   },
-  "devDependencies": {
-    "ava": "^0.17.0"
-  }
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanucode/node-promise-helper.git"
+  },
+  "keywords": [
+    "promise",
+    "library"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryanucode/node-promise-helper/issues"
+  },
+  "homepage": "https://github.com/ryanucode/node-promise-helper#readme",
+  "private": true
 }
