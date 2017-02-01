@@ -2,6 +2,7 @@ const test = require('ava')
 const fs = require('fs')
 const P = require('../index')
 const spawn = require('child_process').spawn
+const fsPath = require('path')
 
 const tmpDir = '/tmp/ava-test'
 
@@ -132,11 +133,8 @@ test('isPromise', t => {
   rejected.catch(() => {})
 })
 
-test('findFiles',  t => {
-  // create a bunch of nested files to find
-  const dir = `${tmpDir}/${genId()}`
+const setupTmpDir = dir => {
   const nestedDir = `${dir}/nested`
-  const expected = []
   return new Promise((resolve, reject) => {
     fs.mkdir(dir, err => err ? reject(err) : resolve())
   })
@@ -149,9 +147,13 @@ test('findFiles',  t => {
     P.writeFile(nestedDir + '/nested.md', '# found the nested file!\n'),
     P.symlink(dir + '/file1', dir + '/sym'),
   ]))
-  // run!
+}
+
+test('findFiles',  t => {
+  // create a bunch of nested files to find
+  const dir = `${tmpDir}/${genId()}`
+  return setupTmpDir(dir)
   .then(() => P.findFiles(dir))
-  // test!
   .then(foundFiles => {
     //console.log('found files:', foundFiles)
     t.true(foundFiles.includes('./file1'), 'should find a top level file')
@@ -160,5 +162,31 @@ test('findFiles',  t => {
     t.false(foundFiles.includes('./nested'), 'should not return directories')
     t.false(foundFiles.includes('./sym'), 'should not return symlinks')
     t.false(foundFiles.includes(''), 'should not return any empty paths')
+  })
+})
+
+test('filesFromPaths', t => {
+  const dir = `${tmpDir}/${genId()}`
+  return setupTmpDir(dir)
+  // usually i dont like to depend on other library methods in tests, however
+  // findFiles() and filesFromPaths() will very often be used together
+  .then(() => P.findFiles(dir))
+  .then(paths => P.filesFromPaths(paths.map(relPath => fsPath.normalize(`${dir}/${relPath}`)), {encoding: 'utf8'}))
+  .then(files => {
+    //console.log('files:', files)
+    const paths = files.map(f => f.path)
+    //const contents = files.map(f => f.content)
+    const byPath = path => files.find(f => f.path === path)
+    t.is(byPath(dir + '/file1').content, 'this is the first file')
+    t.is(byPath(dir + '/)(*&!@#.html').content, 'funny name')
+    t.is(byPath(dir + '/nested/nested.md').content, '# found the nested file!\n')
+    // path assertions same from findFiles
+    t.true(paths.includes(dir + '/file1'), 'should find a top level file')
+    t.true(paths.includes(dir + '/)(*&!@#.html'), 'should return existing files with non normal names')
+    t.true(paths.includes(dir + '/nested/nested.md'), 'should find all nested files')
+    t.false(paths.includes(dir + '/nested'), 'should not return directories')
+    t.false(paths.includes(dir + '/sym'), 'should not return symlinks')
+    t.false(paths.includes(''), 'should not return any empty paths')
+    t.false(paths.includes(dir), 'should not return the base directory')
   })
 })

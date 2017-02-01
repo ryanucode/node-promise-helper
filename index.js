@@ -68,8 +68,8 @@ const findFiles = exports.findFiles = basePath => {
 //
 // filesFromPaths(['./environments/html/index.html'])
 // => Promise.resolve([{path: './environments/html/index.html', content: '<!DOCTYPE html>\n<html>...'}])
-const filesFromPaths = exports.filesFromPaths = paths =>
-  Promise.all(paths.map(path => readFile(path).then(content => { return { path, content } })))
+const filesFromPaths = exports.filesFromPaths = (paths, options) =>
+  Promise.all(paths.map(path => readFile(path, options).then(content => { return { path, content } })))
 
 // takes the same arguments as fs.writeFile() except it does not take a callback
 // returns a promise
