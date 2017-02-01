@@ -1,3 +1,4 @@
+//const R = require('ramda')
 const fs = require('fs')
 const fsPath = require('path')
 const spawn = require('child_process').spawn
@@ -45,26 +46,30 @@ const readFile = exports.readFile = (path, options = {encoding: null, flag: 'r'}
   new Promise((resolve, reject) =>
     fs.readFile(path, options, (err, data) => err ? reject(err) : resolve(data)))
 
-// takes a directory and returns a files object
+// takes a directory and returns a list of relative file paths
 // the returned path will be relative to the passed directory
-// Ex:
-// filesFromDir('./environments/html/files')
-// => Promise.resolve([{path: './given.html', content: '<!DOCTYPE html>\n<html>...'}])
-const filesFromDir = exports.filesFromDir = dirPath => {
-  let files = []
-  const addPathToFiles = path => files.push(readFile(path).then(content => { return { path, content } }))
+const findFiles = exports.findFiles = basePath => {
+  let stdout = ''
   try {
-    const findExe = spawn('find', ['-type', 'f'], {cwd: dirPath})
-    findExe.stdout.on('data', addPathToFiles)
-    return new Promise((resolve, reject) => findExe.stdout.on('close', () => resolve(files)))
-    .then(filesP => Promise.all(filesP))
-  } catch (e) {
-    // Error is usually thrown if the directory you are looking for doesnt
+    const findExe = spawn('find', ['-type', 'f'], {cwd: basePath, encoding: 'utf8'})
+    findExe.stdout.setEncoding('utf8')
+    findExe.stdout.on('data', data => { stdout += data })
+    return new Promise((resolve, reject) =>
+      findExe.stdout.on('close', () => resolve(stdout.split('\n').filter(Boolean))))
+  } catch (err) {
+    // Error is usually thrown if the directory you are looking in doesnt
     // exist. Return an empty set of files if there is an error.
-    console.error(e)
+    console.error(err)
     return Promise.resolve([])
   }
 }
+
+// read all files in a given path into an array of file objects
+//
+// filesFromPaths(['./environments/html/index.html'])
+// => Promise.resolve([{path: './environments/html/index.html', content: '<!DOCTYPE html>\n<html>...'}])
+const filesFromPaths = exports.filesFromPaths = paths =>
+  Promise.all(paths.map(path => readFile(path).then(content => { return { path, content } })))
 
 // takes the same arguments as fs.writeFile() except it does not take a callback
 // returns a promise

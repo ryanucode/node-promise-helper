@@ -130,5 +130,35 @@ test('isPromise', t => {
 
   // catch the rejection after the tests to prevent an error
   rejected.catch(() => {})
-  //console.log(Promise.reject())
+})
+
+test('findFiles',  t => {
+  // create a bunch of nested files to find
+  const dir = `${tmpDir}/${genId()}`
+  const nestedDir = `${dir}/nested`
+  const expected = []
+  return new Promise((resolve, reject) => {
+    fs.mkdir(dir, err => err ? reject(err) : resolve())
+  })
+  .then(() => new Promise((resolve, reject) => {
+    fs.mkdir(nestedDir, err => err ? reject(err) : resolve())
+  }))
+  .then(() => Promise.all([
+    P.writeFile(dir + '/file1', 'this is the first file'),
+    P.writeFile(dir + '/)(*&!@#.html', 'funny name'),
+    P.writeFile(nestedDir + '/nested.md', '# found the nested file!\n'),
+    P.symlink(dir + '/file1', dir + '/sym'),
+  ]))
+  // run!
+  .then(() => P.findFiles(dir))
+  // test!
+  .then(foundFiles => {
+    //console.log('found files:', foundFiles)
+    t.true(foundFiles.includes('./file1'), 'should find a top level file')
+    t.true(foundFiles.includes('./)(*&!@#.html'), 'should return existing files with non normal names')
+    t.true(foundFiles.includes('./nested/nested.md'), 'should find all nested files')
+    t.false(foundFiles.includes('./nested'), 'should not return directories')
+    t.false(foundFiles.includes('./sym'), 'should not return symlinks')
+    t.false(foundFiles.includes(''), 'should not return any empty paths')
+  })
 })
