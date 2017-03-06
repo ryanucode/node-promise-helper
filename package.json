@@ -1,6 +1,6 @@
 {
   "name": "node-promise-helper",
-  "version": "0.3.3",
+  "version": "0.3.0",
   "description": "Promise helpers and std library wrappers.",
   "main": "index.js",
   "directories": {
