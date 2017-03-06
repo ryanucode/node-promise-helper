@@ -36,15 +36,28 @@ const isPromise = exports.isPromise = (thing) => {
   return typeof thing.then === 'function' && typeof thing.catch === 'function'
 }
 
+// Transforms a node style async function into one that rgeturns a promise
+// instead. Pass any arguments you normally would to the promisified function
+// except for the callback. The promise will reject with an error or resolve
+// with the result the function normally calls back with.
+//
+// usage:
+// promisify(readFile)('somefile.txt')
+// promisify(writeFile)('foo.txt', 'alert('hello world')', {encoding: 'utf8'})
+const promisify = exports.promisify = fn => (...args) =>
+  new Promise((resolve, reject) => {
+    const callback = (err, results) =>
+      err ? reject(err) : resolve(results)
+    const argsWithCallback = args.concat([callback])
+    fn(...argsWithCallback)
+  })
+
 // filesystem promises
 
-// readfile as promise
-// takes a file path and optional readoptions as arguments
-// returns a promise that resolves with the file data or rejects with a read
-// error
-const readFile = exports.readFile = (path, options = {encoding: null, flag: 'r'}) =>
-  new Promise((resolve, reject) =>
-    fs.readFile(path, options, (err, data) => err ? reject(err) : resolve(data)))
+const readFile = exports.readFile = promisify(fs.readFile)
+const writeFile = exports.writeFile = promisify(fs.writeFile)
+const mkdir = exports.mkdir = promisify(fs.mkdir)
+const symlink = exports.symlink = promisify(fs.symlink)
 
 // takes a directory and returns a list of relative file paths
 // the returned path will be relative to the passed directory
@@ -65,12 +78,6 @@ const findFiles = exports.findFiles = basePath => {
   }
 }
 
-// takes the same arguments as fs.writeFile() except it does not take a callback
-// returns a promise
-const writeFile = exports.writeFile = (path, content) =>
-  new Promise((resolve, reject) =>
-    fs.writeFile(path, content, (err) => err ? reject(err) : resolve()))
-
 // identical to writeFile but create any nessicary directories
 const writeFileRec = exports.writeFileRec = (path, content) => {
   return writeFile(path, content).catch(err => {
@@ -79,22 +86,12 @@ const writeFileRec = exports.writeFileRec = (path, content) => {
   })
 }
 
-const mkdir = exports.mkdir = (path, mode) =>
-  new Promise((resolve, reject) =>
-    fs.mkdir(path, mode, err => err ? reject(err) : resolve()))
-
 const mkdirRec = exports.mkdirRec = (path, mode) => {
   return mkdir(path, mode).catch(err => {
     if (err.code !== 'ENOENT') throw err
     return mkdirRec(fsPath.dirname(path), mode).then(() => mkdir(path, mode))
   })
 }
-
-// takes the same arguments as fs.writeFile() except it does not take a callback
-// returns a promise
-const symlink = exports.symlink = (target, path, type = 'file') =>
-  new Promise((resolve, reject) =>
-    fs.symlink(target, path, type, err => err ? reject(err) : resolve()))
 
 // read all files in a given path into an array of file objects
 // Note that the default encoding has been changed to utf8 by default to
